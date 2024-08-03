@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">{{ title }}</h1>
+
+<div class="px-12">  
+    <div>{{ table|safe }}</div>
+
+    {% if most_attentive_employee %}
+    <div class="my-8">
+        <h2 class="text-xl font-bold mb-4">Most Sincere Employee</h2>
+        <p><span class="font-bold">Employee ID:</span> {{ most_attentive_employee.Emp_Id }}</p>
+        <p><span class="font-bold">Attendance Percentage:</span> {{ most_attentive_employee.May_Attendance_Percentage }}</p>
+    </div>
+    {% endif %}
+
+    {% if plot_url %}
+    <div class="my-8">
+        <h2 class="text-xl font-bold mb-4">Predicted Attendance Percentages for May</h2>
+        <img src="{{ plot_url }}" alt="Predicted Attendance" style="width: 80%; height: auto;">
+    </div>
+    {% endif %}
+
+    {% if requested_shifts_table %}
+    <div class="my-8">
+        <div class="flex">
+            <div class="w-1/2 pr-2 graph-container">
+                <h2 class="text-xl font-bold mb-4">Most Requested Shifts</h2>
+                <div>{{ requested_shifts_table|safe }}</div>
+            </div>
+            <div class="w-1/2 pl-2 graph-container">
+                <h2 class="text-xl font-bold mb-4">Most Swapped Shifts</h2>
+                <div>{{ swapped_shifts_table|safe }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% for employee_id in unique_employee_ids %}
+    <div class="my-8">
+        <h3 class="text-lg font-bold mb-4">Employee {{ employee_id }}</h3>
+        <div class="flex">
+            <div class="graph">
+                <img src="{{ url_for('static', filename='shift_stats_' ~ employee_id ~ '.png') }}" alt="Requested Shifts and Swapped Shifts">
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if accuracy %}
+    <div class="my-8">
+        <h2 class="text-xl font-bold mb-4">Confusion Matrix</h2>
+        <table class="border border-black border-collapse table-auto">
+            {% for row in conf_matrix %}
+            <tr>
+                {% for item in row %}
+                <td class="border border-black px-2 py-1">{{ item }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h2 class="text-xl font-bold mb-4">Classification Report</h2>
+        <pre>{{ class_report }}</pre>
+        
+        <div style="margin-bottom: 20px;"></div>
+
+        <h2 class="text-xl font-bold mb-2">Swap Rate Prediction Accuracy: {{ accuracy }}</h2>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

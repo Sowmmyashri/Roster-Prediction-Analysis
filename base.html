@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title if title else "Dashboard" }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Additional CSS for dropdown arrow and alignment */
+        .rotate-90 {
+            transform: rotate(90deg);
+        }
+
+        .submenu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.375rem;
+            z-index: 10;
+        }
+
+        .submenu.show {
+            display: block;
+        }
+
+        .submenu.permanent {
+            display: block;
+            position: static;
+            border: none;
+            background-color: transparent;
+        }
+
+        /* Additional CSS for headings and table */
+        h1, h2, h3 {
+            font-weight: bold;
+        }
+
+        table {
+            width: auto;  /* Change to auto */
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.75rem;  /* Reduce font size */
+            border: 2px solid #000; /* Add black border */
+        }
+
+        th, td {
+            padding: 0.25rem;  /* Reduce padding */
+            text-align: left;
+            border: 2px solid #000;  /* Bold black border for each cell */
+            white-space: nowrap;  /* Prevent line breaks */
+        }
+
+        th {
+            background-color: #F3F4F6;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #F1F5F9;
+        }
+
+        /* Additional CSS to ensure the table is responsive */
+        @media (max-width: 768px) {
+            table, th, td {
+                font-size: 0.75rem;  /* Further reduce font size on smaller screens */
+            }
+
+            th, td {
+                padding: 0.25rem;  /* Further reduce padding on smaller screens */
+            }
+        }
+
+        /* Smaller table styles for effort rate prediction page */
+        .effort-rate-page table {
+            font-size: 0.75rem;
+        }
+
+        .effort-rate-page th, .effort-rate-page td {
+            padding: 0.25rem;
+        }
+
+        .effort-rate-page img {
+            width: 80%;  /* Resize the plot */
+            height: auto;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased bg-gray-50">
+    <div class="flex">
+        <div class="w-64 bg-gray-100 border-r border-gray-200 p-4">
+            <h2 class="text-xl font-bold">Dashboard</h2>
+            <ul class="space-y-2">
+                <li>
+                    <a href="{{ url_for('admin_home') }}" class="block py-2 px-4 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 {% if page == 'home' %}bg-blue-500 text-white{% endif %}">Home</a>
+                </li>
+                <li class="relative">
+                    <a href="#" class="block py-2 px-4 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 flex justify-between items-center" id="statisticsDropdown">
+                        <span>Statistics</span>
+                        <svg class="w-4 h-4 fill-current transition-transform duration-300 transform {% if page in ['swap_rate_prediction', 'effort_rate_prediction'] %}rotate-90{% endif %}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M10 18a1 1 0 0 1-.707-.293l-9-9A1 1 0 0 1 1.707 7.293L10 15.586 18.293 7.293A1 1 0 1 1 19.707 8.707l-9 9A1 1 0 0 1 10 18z"/>
+                        </svg>
+                    </a>
+                    <ul class="submenu {% if page in ['swap_rate_prediction', 'effort_rate_prediction'] %}permanent{% endif %}" id="statisticsSubMenu">
+                        <li>
+                            <a href="{{ url_for('swap_rate_prediction') }}" class="block py-2 px-4 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 {% if page == 'swap_rate_prediction' %}bg-blue-500 text-white{% endif %}">Swap Rate Prediction</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('effort_rate_prediction') }}" class="block py-2 px-4 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 {% if page == 'effort_rate_prediction' %}bg-blue-500 text-white{% endif %}">Effort Rate Prediction</a>
+                        </li>
+                    </ul>                    
+                </li>
+                <li>
+                    <a href="{{ url_for('demand') }}" class="block py-2 px-4 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 {% if page == 'demand' %}bg-blue-500 text-white{% endif %}">Demand</a>
+                </li>
+                <li>
+                    <a href="{{ url_for('logout') }}" class="block py-2 px-4 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">Logout</a>
+                </li>
+            </ul>
+        </div>
+        <div class="flex-1 p-4 {% if page == 'effort_rate_prediction' %}effort-rate-page{% endif %}">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const statisticsDropdown = document.getElementById('statisticsDropdown');
+            const statisticsSubMenu = document.getElementById('statisticsSubMenu');
+    
+            // Function to show the submenu and update sessionStorage
+            function showSubMenu() {
+                statisticsSubMenu.classList.add('show');
+                statisticsSubMenu.classList.add('permanent');
+                const arrowIcon = statisticsDropdown.querySelector('svg');
+                arrowIcon.classList.add('rotate-90');
+                sessionStorage.setItem('isSubMenuVisible', 'true');
+            }
+    
+            // Function to hide the submenu and update sessionStorage
+            function hideSubMenu() {
+                statisticsSubMenu.classList.remove('show');
+                statisticsSubMenu.classList.remove('permanent');
+                const arrowIcon = statisticsDropdown.querySelector('svg');
+                arrowIcon.classList.remove('rotate-90');
+                sessionStorage.setItem('isSubMenuVisible', 'false');
+            }
+    
+            // Toggle submenu visibility based on sessionStorage
+            const isSubMenuVisible = sessionStorage.getItem('isSubMenuVisible') === 'true';
+            if (isSubMenuVisible) {
+                showSubMenu();
+            } else {
+                hideSubMenu();
+            }
+    
+            statisticsDropdown.addEventListener('click', function(event) {
+                event.preventDefault();
+                if (!statisticsSubMenu.classList.contains('show')) {
+                    showSubMenu();
+                } else {
+                    hideSubMenu();
+                }
+            });
+        });
+    </script>
+    
+</body>
+</html>

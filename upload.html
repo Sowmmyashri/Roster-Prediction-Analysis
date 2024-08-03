@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 class="text-2xl font-bold mb-4">Upload an Excel File</h2>
+    <form id="upload-form" method="post" enctype="multipart/form-data" action="{{ url_for('demand') }}" class="mb-4" style="display: {{ 'block' if not file_uploaded else 'none' }};">
+        <input type="file" name="file" id="file" class="mb-2 border border-gray-300 rounded p-2">
+        <input type="submit" value="Upload File" class="bg-blue-500 text-white rounded p-2">
+    </form>
+
+    {% if file_uploaded %}
+        <div class="alert alert-info mb-4">
+            File uploaded successfully
+            <br>
+            <a href="#" id="change-demand-btn" class="text-blue-500">Click here to change demand</a>
+        </div>
+
+        <h2 class="text-2xl font-bold mb-4">Processed File Content</h2>
+        <form id="file-content-form" method="post" action="{{ url_for('save_changes') }}" style="display: block;">
+            <div id="file-content" class="overflow-auto">
+                {{ file_content|safe }}
+            </div>
+            <input type="hidden" name="file_content" id="file_content_hidden">
+            <input type="submit" value="Save Changes" class="bg-green-500 text-white rounded p-2 mt-2">
+        </form>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} fixed top-0 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white p-4 rounded shadow-lg" id="flash-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessage = document.getElementById('flash-message');
+            if (flashMessage) {
+                setTimeout(function() {
+                    flashMessage.style.display = 'none';
+                }, 3000); // Hide after 3 seconds
+            }
+
+            const changeDemandBtn = document.getElementById('change-demand-btn');
+            const uploadForm = document.getElementById('upload-form');
+            const fileContentHidden = document.getElementById('file_content_hidden');
+            const fileContentDiv = document.getElementById('file-content');
+
+            if (changeDemandBtn) {
+                changeDemandBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    if (uploadForm) {
+                        uploadForm.style.display = 'block';
+                    }
+                    this.style.display = 'none';
+                });
+            }
+
+            // Make table cells editable
+            const table = document.querySelector("#file-content table");
+            if (table) {
+                table.addEventListener("dblclick", function(event) {
+                    if (event.target.tagName === "TD") {
+                        const cell = event.target;
+                        const originalText = cell.innerText;
+                        cell.contentEditable = true;
+                        cell.focus();
+
+                        cell.addEventListener("blur", function() {
+                            cell.contentEditable = false;
+                            if (cell.innerText !== originalText) {
+                                cell.classList.add("edited");
+                            }
+                        }, { once: true });
+                    }
+                });
+            }
+
+            // Update hidden input with the modified table HTML
+            document.getElementById('file-content-form').addEventListener('submit', function() {
+                fileContentHidden.value = fileContentDiv.innerHTML;
+            });
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            var socket = io();
+
+            // Handle connection response
+            socket.on('connection_response', function(data) {
+                console.log('Connected to server:', data);
+            });
+
+            socket.on('table_update', function(data) {
+                console.log('Received table update from server:', data);
+                // Update your HTML table or handle the update
+            });
+
+            function sendTableUpdate(data) {
+                socket.emit('table_update', data);
+            }
+        });
+
+    </script>
+{% endblock %}
